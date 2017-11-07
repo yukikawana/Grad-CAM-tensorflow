@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import time
 
-VGG_MEAN = [103.939, 116.779, 123.68]
+vggmean = [103.939, 116.779, 123.68]
 
 
 class Vgg16:
@@ -22,6 +22,7 @@ class Vgg16:
         print("npy file loaded")
 
     def build(self, rgb, train_mode=None):
+        self.input= rgb
         """
         load variable from npy to build the VGG
         :param rgb: rgb image [batch, height, width, 3] values scaled [0, 1]
@@ -31,18 +32,34 @@ class Vgg16:
         start_time = time.time()
         print("build model started")
         rgb_scaled = rgb * 255.0
+        print rgb.get_shape().as_list()
+        VGG_MEAN = tf.constant(vggmean, dtype=tf.float32)
+        VGG_MEAN = tf.reshape(VGG_MEAN, [1,1,3])
+        VGG_MEAN = tf.tile(tf.expand_dims(VGG_MEAN,0),[3,1,1,1])
+        rgb_scaled = tf.subtract(rgb_scaled, VGG_MEAN)
 
         # Convert RGB to BGR
-        red, green, blue = tf.split(3, 3, rgb_scaled)
+        #rgb_scaled =tf.cast(rgb_scaled, tf.int32) 
+        red, green, blue = tf.split(rgb_scaled, num_or_size_splits=3, axis=3)
+        print red.get_shape().as_list()
+        print green.get_shape().as_list()
+        print blue.get_shape().as_list()
+        """
+        print red.get_shape().as_list()[1:] 
+        print green.get_shape().as_list()[1:] 
+        print blue.get_shape().as_list()[1:] 
         assert red.get_shape().as_list()[1:] == [224, 224, 1]
         assert green.get_shape().as_list()[1:] == [224, 224, 1]
         assert blue.get_shape().as_list()[1:] == [224, 224, 1]
-        bgr = tf.concat(3, [
-            blue - VGG_MEAN[0],
-            green - VGG_MEAN[1],
-            red - VGG_MEAN[2],
-        ])
+        """
+        bgr = tf.concat([
+            blue, 
+            green,
+            red
+        ], axis=3)
+        print bgr.get_shape().as_list()
         assert bgr.get_shape().as_list()[1:] == [224, 224, 3]
+        bgr = tf.cast(bgr, tf.float32)
 
         self.conv1_1 = self.conv_layer(bgr, "conv1_1")
         self.conv1_2 = self.conv_layer(self.conv1_1, "conv1_2")

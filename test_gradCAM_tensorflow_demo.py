@@ -63,17 +63,15 @@ with eval_graph.as_default():
         
         vgg.build(images, train_mode)
         cost = tf.reduce_sum((vgg.prob - labels) ** 2)
-        #cost = tf.reduce_mean((vgg.prob - labels) ** 2,axis=1)
-        #cost = tf.reduce_mean(vgg.prob)
-        train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
+        #train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
 
         # Get last convolutional layer gradient for generating gradCAM visualization
-        target_conv_layer = vgg.pool5
+        target_conv_layer = vgg.conv4_2
         target_conv_layer_grad = tf.gradients(cost, target_conv_layer)[0]
 
         # Guided backpropagtion back to input layer
-        gb_grad = tf.gradients(cost, vgg.input)[0]
-        print gb_grad
+        #gb_grad = tf.gradients(cost, images)[0]
+        gb_grad = tf.gradients(target_conv_layer, images)[0]
 
         # Normalizing the gradients    
         target_conv_layer_grad_norm = tf.div(target_conv_layer_grad, tf.sqrt(tf.reduce_mean(tf.square(target_conv_layer_grad))) + tf.constant(1e-5))
@@ -89,13 +87,6 @@ with tf.Session(graph=eval_graph) as sess:
     
     prob = sess.run(vgg.prob, feed_dict={images: batch_img, train_mode: False})
     
-    print cost
-    print images
-    print labels
-    print vgg.prob
-    print gb_grad
-    print target_conv_layer
-    print target_conv_layer_grad_norm
     gb_grad_value, target_conv_layer_value, target_conv_layer_grad_value = sess.run([gb_grad, target_conv_layer, target_conv_layer_grad_norm], feed_dict={images: batch_img, labels: batch_label, train_mode: True})
     
     for i in range(batch_size):

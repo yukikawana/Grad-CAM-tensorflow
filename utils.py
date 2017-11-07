@@ -4,10 +4,12 @@ import skimage
 import skimage.io
 import skimage.transform
 import numpy as np
-
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import imshow
 import matplotlib.image as mpimg
+import numpy as np
 
 
 
@@ -79,6 +81,7 @@ def visualize(image, conv_output, conv_grad, gb_viz):
     
     gb_viz -= np.min(gb_viz)
     gb_viz /= gb_viz.max()
+
     
     img = image.astype(float)    
     img -= np.min(img)
@@ -89,7 +92,13 @@ def visualize(image, conv_output, conv_grad, gb_viz):
     # cam = np.float32(cam) + np.float32(img)
     # cam = 255 * cam / np.max(cam)
     # cam = np.uint8(cam)
-              
+    gd_gb = np.dstack((
+            gb_viz[:, :, 0] * cam,
+            gb_viz[:, :, 1] * cam,
+            gb_viz[:, :, 2] * cam,
+        ))
+    print np.mean(gd_gb)
+    cv2.imwrite('gb.png', np.uint8(gd_gb*255))
     
     fig = plt.figure()    
     ax = fig.add_subplot(111)
@@ -119,5 +128,5 @@ def visualize(image, conv_output, conv_grad, gb_viz):
     imgplot = plt.imshow(gd_gb)
     ax.set_title('guided Grad-CAM')
 
-    plt.show()
+    plt.savefig('save.png')
     
